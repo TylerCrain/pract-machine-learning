@@ -1,0 +1,72 @@
+---
+title: "Practical Machine Learning Project"
+author: "Tyler Crain"
+date: "Sunday, November 23, 2014"
+output: html_document
+---
+
+##Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
+
+```{r, echo = FALSE}
+library(caret)
+library(knitr)
+set.seed(1)
+
+training <- read.csv("pml-training.csv", header = TRUE)
+test <- read.csv("pml-testing.csv", header = TRUE)
+filterData <- function(idf) {
+    idKeep <- !sapply(idf, function(x) any(is.na(x)))
+    idf <- idf[, idKeep]
+    idKeep <- !sapply(idf, function(x) any(x==""))
+    idf <- idf[, idKeep]
+    
+    col.rm <- c("X", "user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", 
+                "cvtd_timestamp", "new_window", "num_window")
+    idx.rm <- which(colnames(idf) %in% col.rm)
+    idf <- idf[, -idx.rm]
+    
+    return(idf)
+}
+
+cleanTrain <- filterData(training)
+cleanTrain$classe <- factor(cleanTrain$classe)
+cleanTest <- filterData(test)
+```
+
+##Cleaning the Data
+
+First we will take a look at the raw data and notice that there are many empty columns. The empty comlumns are no use to use, so we need to get rid of them. In addition, there are columns that are not empty but sitll have no use in our prediction model, such as the user name and the raw time stamps for the action. After the data is cleaned, we got rid of over 100 variables and we're left with only relevant data for our prediction.
+
+##Model and Cross-Validation
+
+For this data set, we will use the Random Forest method to predict the outcome and the k-fold method to cross-validate model to check it's accuracy. Random Forest is being used for a few reasons: It can run efficiently on large data sets, it is able to predict even with missing values in the variables, and it's generally a very accurate model. I'm using a k-fold method for cross-validation with 5 folds to save on computing time. With the smaller K we expect a little more bias and less variance. We run the cross-validation and see that the accuract is 
+
+```{r model, cache = TRUE}
+crossVal <- trainControl(method = "cv", number = 5, allowParallel = TRUE, verboseIter = TRUE)
+model <- train(classe ~ ., data = cleanTrain, method = "rf", trControl = crossVal)
+```
+```{r predict, echo = FALSE, cache = TRUE}
+acc.tab <- data.frame(Model=c("Random Forest"),
+                        Accuracy=c(round(max(head(model$results)$Accuracy), 1)))
+
+prediction <- predict(model, test)
+
+predictionDF <- data.frame(rf.pred = prediction)
+```
+```{r}
+acc.tab
+```
+
+We can see that the cross-validation accuracy is very large. So the in sample error is small. We expect the out of sample error to be larger than our in sample error. This is because the model is fit to the data we're using. Since the in sample error is small, we can expect the out of sample error to be small as well. Even if it is larger than in sample, it will still be small. 
+
+## Prediction
+
+Now that we've created a model to predict the outcome of the test data, we make our predictions. 
+
+```{r}
+predictionDF
+```
+
+AFter submtting these predictions, they turn out to be all correct.     
