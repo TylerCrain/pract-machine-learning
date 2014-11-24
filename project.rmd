@@ -30,43 +30,47 @@ filterData <- function(idf) {
     return(idf)
 }
 
-cleanTrain <- filterData(training)
-cleanTrain$classe <- factor(cleanTrain$classe)
-cleanTest <- filterData(test)
 ```
 
 ##Cleaning the Data
 
 First we will take a look at the raw data and notice that there are many empty columns. The empty comlumns are no use to use, so we need to get rid of them. In addition, there are columns that are not empty but sitll have no use in our prediction model, such as the user name and the raw time stamps for the action. After the data is cleaned, we got rid of over 100 variables and we're left with only relevant data for our prediction.
 
+```{r}
+cleanTrain <- filterData(training)
+cleanTrain$classe <- factor(cleanTrain$classe)
+cleanTest <- filterData(test)
+```
+
 ##Model and Cross-Validation
 
-For this data set, we will use the Random Forest method to predict the outcome and the k-fold method to cross-validate model to check it's accuracy. Random Forest is being used for a few reasons: It can run efficiently on large data sets, it is able to predict even with missing values in the variables, and it's generally a very accurate model. I'm using a k-fold method for cross-validation with 5 folds to save on computing time. With the smaller K we expect a little more bias and less variance. We run the cross-validation and see that the accuract is 
+For this data set, we will use the Random Forest method to predict the outcome and the k-fold method to cross-validate model to check it's accuracy. Random Forest is being used for a few reasons: It can run efficiently on large data sets, it is able to predict even with missing values in the variables, and it's generally a very accurate model. I'm using a k-fold method for cross-validation with 5 folds to save on computing time. With the smaller K we expect a little more bias and less variance. We run the cross-validation and see that the accuracte it is.
 
-```{r model, cache = TRUE}
+```{r model, cache = TRUE, resutls = "hide"}
 crossVal <- trainControl(method = "cv", number = 5, allowParallel = TRUE, verboseIter = TRUE)
 model <- train(classe ~ ., data = cleanTrain, method = "rf", trControl = crossVal)
 ```
+
 ```{r predict, echo = FALSE, cache = TRUE}
 acc.tab <- data.frame(Model=c("Random Forest"),
                         Accuracy=c(round(max(head(model$results)$Accuracy), 1)))
 
-prediction <- predict(model, test)
-
-predictionDF <- data.frame(rf.pred = prediction)
 ```
+
 ```{r}
 acc.tab
 ```
 
-We can see that the cross-validation accuracy is very large. So the in sample error is small. We expect the out of sample error to be larger than our in sample error. This is because the model is fit to the data we're using. Since the in sample error is small, we can expect the out of sample error to be small as well. Even if it is larger than in sample, it will still be small. 
+We can see that the cross-validation accuracy is very large. It rounds up to one. So the in sample error is small. We expect the out of sample error to be larger than our in sample error. This is because the model is fit to the data we're using. Since the in sample error is small, we can expect the out of sample error to be small as well. Even if it is larger than in sample, it will still be small. 
 
 ## Prediction
 
 Now that we've created a model to predict the outcome of the test data, we make our predictions. 
 
 ```{r}
-predictionDF
+prediction <- predict(model, test)
+prediction
 ```
 
-AFter submtting these predictions, they turn out to be all correct.     
+
+After submtting these predictions, they turn out to be all correct.     

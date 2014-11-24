@@ -67,15 +67,15 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <div id="cleaning-the-data" class="section level2">
 <h2>Cleaning the Data</h2>
 <p>First we will take a look at the raw data and notice that there are many empty columns. The empty comlumns are no use to use, so we need to get rid of them. In addition, there are columns that are not empty but sitll have no use in our prediction model, such as the user name and the raw time stamps for the action. After the data is cleaned, we got rid of over 100 variables and we’re left with only relevant data for our prediction.</p>
+<pre class="r"><code>cleanTrain &lt;- filterData(training)
+cleanTrain$classe &lt;- factor(cleanTrain$classe)
+cleanTest &lt;- filterData(test)</code></pre>
 </div>
 <div id="model-and-cross-validation" class="section level2">
 <h2>Model and Cross-Validation</h2>
-<p>For this data set, we will use the Random Forest method to predict the outcome and the k-fold method to cross-validate model to check it’s accuracy. Random Forest is being used for a few reasons: It can run efficiently on large data sets, it is able to predict even with missing values in the variables, and it’s generally a very accurate model. I’m using a k-fold method for cross-validation with 5 folds to save on computing time. With the smaller K we expect a little more bias and less variance. We run the cross-validation and see that the accuract is</p>
+<p>For this data set, we will use the Random Forest method to predict the outcome and the k-fold method to cross-validate model to check it’s accuracy. Random Forest is being used for a few reasons: It can run efficiently on large data sets, it is able to predict even with missing values in the variables, and it’s generally a very accurate model. I’m using a k-fold method for cross-validation with 5 folds to save on computing time. With the smaller K we expect a little more bias and less variance. We run the cross-validation and see that the accuracte it is.</p>
 <pre class="r"><code>crossVal &lt;- trainControl(method = &quot;cv&quot;, number = 5, allowParallel = TRUE, verboseIter = TRUE)
 model &lt;- train(classe ~ ., data = cleanTrain, method = &quot;rf&quot;, trControl = crossVal)</code></pre>
-<pre><code>## Loading required package: randomForest
-## randomForest 4.6-10
-## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <pre><code>## + Fold1: mtry= 2 
 ## - Fold1: mtry= 2 
 ## + Fold1: mtry=27 
@@ -112,11 +112,18 @@ model &lt;- train(classe ~ ., data = cleanTrain, method = &quot;rf&quot;, trCont
 <pre class="r"><code>acc.tab</code></pre>
 <pre><code>##           Model Accuracy
 ## 1 Random Forest        1</code></pre>
-<p>We can see that the cross-validation accuracy is very large. So the in sample error is small. We expect the out of sample error to be larger than our in sample error. This is because the model is fit to the data we’re using. Since the in sample error is small, we can expect the out of sample error to be small as well. Even if it is larger than in sample, it will still be small.</p>
+<p>We can see that the cross-validation accuracy is very large. It rounds up to one. So the in sample error is small. We expect the out of sample error to be larger than our in sample error. This is because the model is fit to the data we’re using. Since the in sample error is small, we can expect the out of sample error to be small as well. Even if it is larger than in sample, it will still be small.</p>
 </div>
 <div id="prediction" class="section level2">
 <h2>Prediction</h2>
 <p>Now that we’ve created a model to predict the outcome of the test data, we make our predictions.</p>
+<pre class="r"><code>prediction &lt;- predict(model, test)</code></pre>
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre class="r"><code>prediction</code></pre>
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E</code></pre>
 <p>After submtting these predictions, they turn out to be all correct.</p>
 </div>
 
